@@ -1,0 +1,263 @@
+---
+title: "03_Completers_Prelim"
+author: "Sglatt"
+date: "`r Sys.Date()`"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Packages}
+if (!require("apaTables")) {install.packages("apaTables"); require("apaTables")} 
+if (!require("car")) {install.packages("car"); require("car")} 
+if (!require("descr")) {install.packages("descr"); require("descr")} 
+if (!require("dplyr")) {install.packages("dplyr"); require("dplyr")} 
+if (!require("ggpubr")) {install.packages("ggpubr"); require("ggpubr")} 
+if (!require("moments")) {install.packages("moments"); require("moments")} 
+if (!require("readxl")) {install.packages("readxl"); require("readxl")}    
+if (!require("summarytools")) {install.packages("summarytools"); require("summarytools")} 
+if (!require("tidyverse")) {install.packages("tidyverse"); require("tidyverse")}
+```
+
+```{r Data}
+EMA_completers_merged <- readxl::read_xlsx("Data/EMA baseline scored_YZ060524.xlsx")
+colnames(EMA_completers_merged) <- gsub(" ", "_", colnames(EMA_completers_merged)) 
+```
+
+```{r Demographics}
+#### label variables ####
+EMA_completers_merged$gender_fac <- factor(EMA_completers_merged$gender,
+                                    levels = c(1, 2, 3),
+                                    labels = c("Male", "Female", "Non-binary")) 
+
+EMA_completers_merged$marital_fac <- factor(EMA_completers_merged$marital,
+                                     levels = c(1, 2, 3, 4, 5, 6),
+                                     labels = c("Single/Never married", 
+                                                "Currently married", 
+                                                "Divorced", 
+                                                "Separated", 
+                                                "Widowed", 
+                                                "Currently in a relationship but not married"))
+
+EMA_completers_merged$sexual_orient_fac <- factor(EMA_completers_merged$sexual_orient,
+                                           levels = c(1, 2, 3, 5, 6),
+                                           labels = c("Heterosexual", 
+                                                      "Homosexual",
+                                                      "Bisexual/Pansexual",
+                                                      "Asexual/Aromantic",
+                                                      "Queer/Questioning"))
+table(EMA_completers_merged$sexual_orient)
+
+EMA_completers_merged$race_fac <- factor(EMA_completers_merged$race,
+                                           levels = c(1, 2, 3, 4, 5, 6),
+                                           labels = c("Caucasian", 
+                                                      "Black/African American",
+                                                      "Asian",
+                                                      "Native American/Indigenous",
+                                                      "Native Hawaiian/Pacific Islander",
+                                                      "Others"))
+
+EMA_completers_merged$ethnicity_fac <- factor(EMA_completers_merged$ethnicity,
+                                       levels = c(1, 2),
+                                       labels = c("Yes",
+                                                  "No"))
+
+EMA_completers_merged$education_fac <- factor(EMA_completers_merged$education,
+                                       levels = c(1, 2, 3, 4, 5, 6, 7),
+                                       labels = c("Less than high school", 
+                                                  "High school", 
+                                                  "Some college", 
+                                                  "2 year degree/Associate's degree", 
+                                                  "4 year degree/Bachelor's degree",
+                                                  "Master's degree", 
+                                                  "Doctorate"))
+
+EMA_completers_merged$employment_fac <- factor(EMA_completers_merged$employment,
+                                        levels = c(1, 2, 3, 4, 5, 6, 7, 8, 9),
+                                        labels = c("Currently employed, full-time",
+                                                   "Currently employed, part-time",
+                                                   "Currently unemployed, looking for employment", 
+                                                   "Currently unemployed, not looking for employment", 
+                                                   "Student", 
+                                                   "Military", 
+                                                   "Retired", 
+                                                   "Unable to work",
+                                                   "Stay at home parent"))
+
+EMA_completers_merged$household_income_fac <- factor(EMA_completers_merged$household_income,
+                                              levels = c(1, 2, 3, 4, 5, 6, 7, 8),
+                                              labels = c("Less than $20,000",
+                                                         "$20,000 to $34,999",
+                                                         "$35,000 to $49,999",
+                                                         "$50,000 to $74,999",
+                                                         "$75,000 to $99,999",
+                                                         "$100,000 to $149,999",
+                                                         "$150,000 to $199,999",
+                                                         "$200,000 or more"))
+
+EMA_completers_merged$englishYN_fac <- factor(EMA_completers_merged$englishYN,
+                                       levels = c(1, 2),
+                                       labels = c("Yes",
+                                                  "No"))
+
+EMA_completers_merged$psy_historyYN_fac <- factor(EMA_completers_merged$psy_historyYN,
+                                       levels = c(1, 2),
+                                       labels = c("Yes",
+                                                  "No"))
+
+EMA_completers_merged$relative_historyYN_fac <- factor(EMA_completers_merged$relative_historyYN,
+                                       levels = c(1, 2),
+                                       labels = c("Yes",
+                                                  "No"))
+
+EMA_completers_merged$med_historyYN_fac <- factor(EMA_completers_merged$med_historyYN,
+                                       levels = c(1, 2),
+                                       labels = c("Yes",
+                                                  "No"))
+
+table_helper <- function(data, variable_name) {
+  frequencies <- table(data[[variable_name]])
+  percentages <- prop.table(frequencies) * 100
+  table_df <- data.frame(Response = names(frequencies),
+                         Frequency = as.vector(frequencies), 
+                         Percentage = paste(round(percentages, 2), "%", sep = ""))
+  table_df$Variable <- variable_name
+  return(table_df)
+}
+
+add_table_to_combined <- function(table, variable_name) {
+  header_row <- data.frame(Response = paste("", variable_name, ""), Frequency = "", Percentage = "", Variable = "")
+  return(rbind(header_row, table))
+}
+
+gender_table <- table_helper(EMA_completers_merged, "gender_fac")
+marital_table <- table_helper(EMA_completers_merged, "marital_fac")
+sexual_orient_table <- table_helper(EMA_completers_merged, "sexual_orient_fac")
+race_table <- table_helper(EMA_completers_merged, "race_fac")
+ethnicity_table <- table_helper(EMA_completers_merged, "ethnicity_fac")
+education_table <- table_helper(EMA_completers_merged, "education_fac")
+parent1edu_table <- table_helper(EMA_completers_merged, "Parent1Edu")
+parent2edu_table <- table_helper(EMA_completers_merged, "Parent2Edu")
+employment_table <- table_helper(EMA_completers_merged, "employment_fac")
+household_income_table <- table_helper(EMA_completers_merged, "household_income_fac")
+englishYN_table <- table_helper(EMA_completers_merged, "englishYN_fac")
+psy_historyYN_table <- table_helper(EMA_completers_merged, "psy_historyYN_fac")
+relative_historyYN_table <- table_helper(EMA_completers_merged, "relative_historyYN_fac")
+med_historyYN_table <- table_helper(EMA_completers_merged, "med_historyYN_fac")
+
+combined_table <- NULL
+combined_table <- rbind(combined_table, add_table_to_combined(gender_table, "Gender"))
+combined_table <- rbind(combined_table, add_table_to_combined(marital_table, "Marital_Status"))
+combined_table <- rbind(combined_table, add_table_to_combined(sexual_orient_table, "Sexual_Orientation"))
+combined_table <- rbind(combined_table, add_table_to_combined(race_table, "Race"))
+combined_table <- rbind(combined_table, add_table_to_combined(ethnicity_table, "Ethnicity"))
+combined_table <- rbind(combined_table, add_table_to_combined(education_table, "Education"))
+combined_table <- rbind(combined_table, add_table_to_combined(parent1edu_table, "Parent1_Education"))
+combined_table <- rbind(combined_table, add_table_to_combined(parent2edu_table, "Parent2_Education"))
+combined_table <- rbind(combined_table, add_table_to_combined(employment_table, "Employment_Status"))
+combined_table <- rbind(combined_table, add_table_to_combined(household_income_table, "Household_Income"))
+combined_table <- rbind(combined_table, add_table_to_combined(englishYN_table, "Primary_Language"))
+combined_table <- rbind(combined_table, add_table_to_combined(psy_historyYN_table, "Mental_Health_History"))
+combined_table <- rbind(combined_table, add_table_to_combined(relative_historyYN_table, "Relative_Psychiatric_History"))
+combined_table <- rbind(combined_table, add_table_to_combined(med_historyYN_table, "Medication_History"))
+combined_table
+
+write.csv(combined_table, paste0("Demographics_text_", format(Sys.Date(), "%Y-%m-%d"), ".csv"), row.names = TRUE)
+
+# Numeric / raw
+gender_table <- table_helper(EMA_completers_merged, "gender")
+marital_table <- table_helper(EMA_completers_merged, "marital")
+sexual_orient_table <- table_helper(EMA_completers_merged, "sexual_orient")
+race_table <- table_helper(EMA_completers_merged, "race")
+ethnicity_table <- table_helper(EMA_completers_merged, "ethnicity")
+education_table <- table_helper(EMA_completers_merged, "education")
+parent1edu_table <- table_helper(EMA_completers_merged, "Parent1Edu")
+parent2edu_table <- table_helper(EMA_completers_merged, "Parent2Edu")
+employment_table <- table_helper(EMA_completers_merged, "employment")
+household_income_table <- table_helper(EMA_completers_merged, "household_income")
+englishYN_table <- table_helper(EMA_completers_merged, "englishYN")
+psy_historyYN_table <- table_helper(EMA_completers_merged, "psy_historyYN")
+relative_historyYN_table <- table_helper(EMA_completers_merged, "relative_historyYN")
+med_historyYN_table <- table_helper(EMA_completers_merged, "med_historyYN")
+
+combined_table <- NULL
+combined_table <- rbind(combined_table, add_table_to_combined(gender_table, "Gender"))
+combined_table <- rbind(combined_table, add_table_to_combined(marital_table, "Marital_Status"))
+combined_table <- rbind(combined_table, add_table_to_combined(sexual_orient_table, "Sexual_Orientation"))
+combined_table <- rbind(combined_table, add_table_to_combined(race_table, "Race"))
+combined_table <- rbind(combined_table, add_table_to_combined(ethnicity_table, "Ethnicity"))
+combined_table <- rbind(combined_table, add_table_to_combined(education_table, "Education"))
+combined_table <- rbind(combined_table, add_table_to_combined(parent1edu_table, "Parent1_Education"))
+combined_table <- rbind(combined_table, add_table_to_combined(parent2edu_table, "Parent2_Education"))
+combined_table <- rbind(combined_table, add_table_to_combined(employment_table, "Employment_Status"))
+combined_table <- rbind(combined_table, add_table_to_combined(household_income_table, "Household_Income"))
+combined_table <- rbind(combined_table, add_table_to_combined(englishYN_table, "Primary_Language"))
+combined_table <- rbind(combined_table, add_table_to_combined(psy_historyYN_table, "Mental_Health_History"))
+combined_table <- rbind(combined_table, add_table_to_combined(relative_historyYN_table, "Relative_Psychiatric_History"))
+combined_table <- rbind(combined_table, add_table_to_combined(med_historyYN_table, "Medication_History"))
+combined_table
+
+write.csv(combined_table, paste0("Demographics_numeric_", format(Sys.Date(), "%Y-%m-%d"), ".csv"), row.names = TRUE)
+```
+
+```{r Measure descriptives}
+#### normality ####
+subset_columns <- EMA_completers_merged[, c("STAIS", 
+                                            "STAIT", 
+                                            "SSI", 
+                                            "GPTS_self", 
+                                            "GPTS_pers",
+                                            "BDI", 
+                                            "SF36_SociFunc",
+                                            "SF36_RoleEmoProblem",
+                                            "PCL",
+                                            "DERS_Nonacceptance",
+                                            "DERS_DiffGoalDirectedBehaviour", 
+                                            "DERS_Impulse", 
+                                            "DERS_LackAwareness", 
+                                            "DERS_LackStrategies", 
+                                            "DERS_LackClarity", 
+                                            "DERS",
+                                            # updated variables:
+                                            "P_IFI", 
+                                            "N_IFI", 
+                                            "PNSubtraction_ave", 
+                                            "CDRISC", 
+                                            "EDS", 
+                                            "CFS_ReCoping", 
+                                            "CFS_Overall", 
+                                            "CFS_MetaCoping", 
+                                            "CFS_Abandonment")]
+
+skewness_kurtosis <- data.frame(Variable = character(),
+                                 Skewness = numeric(),
+                                 Kurtosis = numeric(),
+                                 stringsAsFactors = FALSE)
+
+for(var in colnames(subset_columns)) {
+  if (any(!is.na(subset_columns[[var]]))) {
+    skew <- skewness(subset_columns[[var]], na.rm = TRUE)
+    kurt <- kurtosis(subset_columns[[var]], na.rm = TRUE)
+    skewness_kurtosis <- rbind(skewness_kurtosis, data.frame(Variable = var, Skewness = skew, Kurtosis = kurt))
+  }
+}
+
+# qqPlot(subset_columns$DERS_LackAwareness) # visualize QQ for normality
+
+#### descriptives ####
+dfSummary(subset_columns)
+summary_output <- dfSummary(subset_columns)
+
+summary_output <- descr(subset_columns)
+write.csv(summary_output, paste0("summary_output_", format(Sys.Date(), "%Y-%m-%d"), ".csv"), row.names = TRUE)
+
+
+#### correlations ####
+apa.cor.table(subset_columns, filename = "Prelim_correlations.doc", 
+              table.number = 1, 
+              show.conf.interval = TRUE, 
+              show.sig.stars = TRUE, 
+              landscape = TRUE)
+```

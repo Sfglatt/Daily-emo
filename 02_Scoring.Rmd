@@ -1,0 +1,216 @@
+---
+title: "02_Scoring"
+date: "`r Sys.Date()`"
+output: github_document
+keep_html: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Packages}
+if (!require("dplyr")) {install.packages("dplyr"); require("dplyr")}
+if (!require("readxl")) {install.packages("readxl"); require("readxl")}
+if (!require("stringr")) {install.packages("stringr"); require("stringr")}
+if (!require("tidyverse")) {install.packages("tidyverse"); require("tidyverse")}
+if (!require("writexl")) {install.packages("writexl"); require("writexl")}
+```
+
+```{r Data}
+# Import data
+df <- read_excel("Data/EMA baseline scored.xlsx") 
+
+# Look at it
+glimpse(df)
+colnames(df)
+
+# Make numeric; NAs for missing
+df <- df %>%
+  mutate_if(~!all(is.na(as.numeric(.))), as.numeric) 
+```
+
+```{r IIT Indices}
+# Verify item indices
+df <- df %>%
+  dplyr::mutate(averageP_a_2 = 
+                  (P1a_2+ P2a_2+ P3a_2+ P4a_2+ P5a_2+P6a_2 +P7a_2 + P8a_2 + P9a_2 + P10a_2 
+                   + P11a_2 + P12a_2)/12,
+         
+         averageP_a_3 =
+           (P1a_3+ P2a_3+ P3a_3+ P4a_3+ P5a_3+P6a_3 +P7a_3 + P8a_3 + P9a_3 + P10a_3 + P11a_3 + P12a_3)/12,
+         
+         averageP_a_4 = 
+           (P1a_4+ P2a_4+ P3a_4+ P4a_4+ P5a_4+P6a_4 +P7a_4 + P8a_4 + P9a_4 + P10a_4 + P11a_4 + P12a_4)/12,
+         
+         averageP_b_2 = 
+           (P1b_2+ P2b_2+ P3b_2+ P4b_2+ P5b_2+P6b_2 +P7b_2 + P8b_2 + P9b_2 + P10b_2 + P11b_2 + P12b_2)/12,
+         
+         averageP_b_3 = 
+           (P1b_3+ P2b_3+ P3b_3+ P4b_3+ P5b_3+P6b_3 +P7b_3 + P8b_3 + P9b_3 + P10b_3 + P11b_3 + P12b_3)/12,
+         
+         averageP_b_4 = 
+           (P1b_4+ P2b_4+ P3b_4+ P4b_4+ P5b_4+P6b_4 +P7b_4 + P8b_4 + P9b_4 + P10b_4 + P11b_4 + P12b_4)/12,
+         
+         averageP_c_2 = 
+           (P1c_2+ P2c_2+ P3c_2+ P4c_2+ P5c_2+P6c_2 +P7c_2 + P8c_2 + P9c_2 + P10c_2 + P11c_2 + P12c_2)/12,
+         
+         averageP_c_3 = 
+           (P1c_3+ P2c_3+ P3c_3+ P4c_3+ P5c_3+P6c_3 +P7c_3 + P8c_3 + P9c_3 + P10c_3 + P11c_3 + P12c_3)/12,
+         
+         averageP_c_4 = 
+           (P1c_4+ P2c_4+ P3c_4+ P4c_4+ P5c_4+P6c_4 +P7c_4 + P8c_4 + P9c_4 + P10c_4 + P11c_4 + P12c_4)/12,
+         
+         averageN_a_2 = 
+           (N1a_2+ N2a_2+ N3a_2+ N4a_2+ N5a_2+N6a_2 +N7a_2 + N8a_2 + N9a_2 + N10a_2 + N11a_2 + N12a_2)/12,
+         
+         averageN_a_3 = 
+           (N1a_3+ N2a_3+ N3a_3+ N4a_3+ N5a_3+N6a_3 +N7a_3 + N8a_3 + N9a_3 + N10a_3 + N11a_3 + N12a_3)/12,
+         
+         averageN_a_4 = 
+           (N1a_4+ N2a_4+ N3a_4+ N4a_4+ N5a_4+N6a_4 +N7a_4 + N8a_4 + N9a_4 + N10a_4 + N11a_4 + N12a_4)/12,
+         
+         averageN_b_2 = 
+           (N1b_2+ N2b_2+ N3b_2+ N4b_2+ N5b_2+N6b_2 +N7b_2 + N8b_2 + N9b_2 + N10b_2 + N11b_2 + N12b_2)/12,
+         
+         averageN_b_3 = 
+           (N1b_3+ N2b_3+ N3b_3+ N4b_3+ N5b_3+N6b_3 +N7b_3 + N8b_3 + N9b_3 + N10b_3 + N11b_3 + N12b_3)/12,
+         
+         averageN_b_4 = 
+           (N1b_4+ N2b_4+ N3b_4+ N4b_4+ N5b_4+N6b_4 +N7b_4 + N8b_4 + N9b_4 + N10b_4 + N11b_4 + N12b_4)/12,
+         
+         averageN_c_2 = 
+           (N1c_2+ N2c_2+ N3c_2+ N4c_2+ N5c_2+N6c_2 +N7c_2 + N8c_2 + N9c_2 + N10c_2 + N11c_2 + N12c_2)/12,
+         
+         averageN_c_3 = 
+           (N1c_3+ N2c_3+ N3c_3+ N4c_3+ N5c_3+N6c_3 +N7c_3 + N8c_3 + N9c_3 + N10c_3 + N11c_3 + N12c_3)/12,
+         
+         averageN_c_4 = 
+           (N1c_4+ N2c_4+ N3c_4+ N4c_4+ N5c_4+N6c_4 +N7c_4 + N8c_4 + N9c_4 + N10c_4 + N11c_4 + N12c_4)/12,
+         
+         P_Bias_1  =-(averageP_a_4/((averageP_a_2+averageP_a_3)/2)),
+         P_Bias_2  =-(averageP_b_4/((averageP_b_2+averageP_b_3)/2)),
+         P_Bias_3  =-(averageP_c_4/((averageP_c_2+averageP_c_3)/2)),
+         N_Bias_1  =-(averageN_a_4/((averageN_a_2+averageN_a_3)/2)),
+         N_Bias_2  =-(averageN_b_4/((averageN_b_2+averageN_b_3)/2)),
+         N_Bias_3  =-(averageN_c_4/((averageN_c_2+averageN_c_3)/2)),
+         
+         P_IFI = 
+           sqrt((( P_Bias_3-  P_Bias_2)*( P_Bias_3-  P_Bias_2)+(  P_Bias_2-  P_Bias_1)*(P_Bias_2-  P_Bias_1))/2),
+         
+         N_IFI = 
+           sqrt((( N_Bias_3-  N_Bias_2)*( N_Bias_3-  N_Bias_2)+(  N_Bias_2-  N_Bias_1)*(N_Bias_2-  N_Bias_1))/2))
+
+# Bias scoring
+df <- df %>%
+  dplyr::mutate(
+    Nsum = P1a_2 + P1a_3 + P2a_2 + P2a_3 + P3a_2 + P3a_3 + P4a_2 + P4a_3 + P5a_2 + P5a_3 + 
+           P6a_2 + P6a_3 + P7a_2 + P7a_3 + P8a_2 + P8a_3 + P9a_2 + P9a_3 + P10a_2 + P10a_3 + 
+           P11a_2 + P11a_3 + P12a_2 + P12a_3 + P1b_2 + P1b_3 + P2b_2 + P2b_3 + P3b_2 + P3b_3 + 
+           P4b_2 + P4b_3 + P5b_2 + P5b_3 + P6b_2 + P6b_3 + P7b_2 + P7b_3 + P8b_2 + P8b_3 + 
+           P9b_2 + P9b_3 + P10b_2 + P10b_3 + P11b_2 + P11b_3 + P12b_2 + P12b_3 + P1c_2 + P1c_3 + 
+           P2c_2 + P2c_3 + P3c_2 + P3c_3 + P4c_2 + P4c_3 + P5c_2 + P5c_3 + P6c_2 + P6c_3 + 
+           P7c_2 + P7c_3 + P8c_2 + P8c_3 + P9c_2 + P9c_3 + P10c_2 + P10c_3 + P11c_2 + P11c_3 + 
+           P12c_2 + P12c_3 + N1a_4 + N2a_4 + N3a_4 + N4a_4 + N5a_4 + N6a_4 + N7a_4 + N8a_4 + 
+           N9a_4 + N10a_4 + N11a_4 + N12a_4 + N1b_4 + N2b_4 + N3b_4 + N4b_4 + N5b_4 + N6b_4 + 
+           N7b_4 + N8b_4 + N9b_4 + N10b_4 + N11b_4 + N12b_4 + N1c_4 + N2c_4 + N3c_4 + N4c_4 + 
+           N5c_4 + N6c_4 + N7c_4 + N8c_4 + N9c_4 + N10c_4 + N11c_4 + N12c_4,
+    Psum = N1a_2 + N1a_3 + N2a_2 + N2a_3 + N3a_2 + N3a_3 + N4a_2 + N4a_3 + N5a_2 + N5a_3 + 
+           N6a_2 + N6a_3 + N7a_2 + N7a_3 + N8a_2 + N8a_3 + N9a_2 + N9a_3 + N10a_2 + N10a_3 + 
+           N11a_2 + N11a_3 + N12a_2 + N12a_3 + N1b_2 + N1b_3 + N2b_2 + N2b_3 + N3b_2 + N3b_3 + 
+           N4b_2 + N4b_3 + N5b_2 + N5b_3 + N6b_2 + N6b_3 + N7b_2 + N7b_3 + N8b_2 + N8b_3 + 
+           N9b_2 + N9b_3 + N10b_2 + N10b_3 + N11b_2 + N11b_3 + N12b_2 + N12b_3 + N1c_2 + N1c_3 + 
+           N2c_2 + N2c_3 + N3c_2 + N3c_3 + N4c_2 + N4c_3 + N5c_2 + N5c_3 + N6c_2 + N6c_3 + 
+           N7c_2 + N7c_3 + N8c_2 + N8c_3 + N9c_2 + N9c_3 + N10c_2 + N10c_3 + N11c_2 + N11c_3 + 
+           N12c_2 + N12c_3 + P1a_4 + P2a_4 + P3a_4 + P4a_4 + P5a_4 + P6a_4 + P7a_4 + P8a_4 + 
+           P9a_4 + P10a_4 + P11a_4 + P12a_4 + P1b_4 + P2b_4 + P3b_4 + P4b_4 + P5b_4 + P6b_4 + 
+           P7b_4 + P8b_4 + P9b_4 + P10b_4 + P11b_4 + P12b_4 + P1c_4 + P2c_4 + P3c_4 + P4c_4 + 
+           P5c_4 + P6c_4 + P7c_4 + P8c_4 + P9c_4 + P10c_4 + P11c_4 + P12c_4,
+    PAverage = Psum / 108,
+    NAverage = Nsum / 108,
+    PNSubtraction_ave = (Psum - Nsum) / 108
+  )
+```
+
+```{r Assessments}
+# CDRISC
+df <- df %>%
+  dplyr::mutate(CDRISC = as.numeric(`CDRISC_1`) + as.numeric(`CDRISC_2`) + as.numeric(`CDRISC_3`) + 
+           as.numeric(`CDRISC_4`) + as.numeric(`CDRISC_5`) + as.numeric(`CDRISC_6`) + 
+           as.numeric(`CDRISC_7`) + as.numeric(`CDRISC_8`) +  as.numeric(`CDRISC_9`) +
+             as.numeric(`CDRISC_10`))
+
+# ADHD
+df <- df %>%
+  dplyr::mutate(ADHD_PartA = `ADHD-6_1` + `ADHD-6_2` + `ADHD-6_3` + `ADHD-6_4` + `ADHD-6_5` + `ADHD-6_6`,
+         ADHD_PartB = `ADHD-B_1` + `ADHD-B_2` + `ADHD-B_3` + `ADHD-B_4`
+         + `ADHD-B_5` + `ADHD-B_6` + `ADHD-B_7` + 
+                      `ADHD-B_8` + `ADHD-B_9` + `ADHD-B_10` + `ADHD-B_11` + `ADHD-B_12`,
+         ADHD_Total = `ADHD-6_1` + `ADHD-6_2` + `ADHD-6_3` + `ADHD-6_4` + `ADHD-6_5` + `ADHD-6_6` + 
+                      `ADHD-B_1` + `ADHD-B_2` + `ADHD-B_3` + `ADHD-B_4` + `ADHD-B_5` + `ADHD-B_6` +
+           `ADHD-B_7` +  `ADHD-B_8` + `ADHD-B_9` + `ADHD-B_10` + `ADHD-B_11` + `ADHD-B_12`,
+         ADHD_Inattentive = `ADHD-6_1` + `ADHD-6_2` + `ADHD-6_3` + `ADHD-6_4` + `ADHD-B_1` + `ADHD-B_2` + 
+                            `ADHD-B_3` + `ADHD-B_4` + `ADHD-B_5`,
+         ADHD_Hyperactive_Motor = `ADHD-6_5` + `ADHD-6_6` + `ADHD-B_6` + `ADHD-B_7` + `ADHD-B_8`,
+         ADHD_Hyperactive_Verbal = `ADHD-B_9` + `ADHD-B_10` + `ADHD-B_11` + `ADHD-B_12`)
+
+# STAIS and STAIT
+df <- df %>%
+  dplyr::mutate(STAIS = `STAIs_1` + `STAIs_2` + `STAIs_3` + `STAIs_4` + `STAIs_5`,
+         STAIT = `STAIt_1` + `STAIt_2` + `STAIt_3` + `STAIt_4` + `STAIt_5`)
+
+# SSI
+df <- df %>%
+  dplyr::mutate(SSI = `SSI1` + `SSI2` + `SSI3` + `SSI4` + `SSI5`)
+
+# GPTS
+df <- df %>%
+  dplyr::mutate(GPTS_self = `GPTS-self ref_1` + `GPTS-self ref_2` + `GPTS-self ref_3` + `GPTS-self ref_4` + 
+                     `GPTS-self ref_5` + `GPTS-self ref_6` + `GPTS-self ref_7` + `GPTS-self ref_8`,
+         GPTS_pers = `GPTS-pers_1` + `GPTS-pers_2` + `GPTS-pers_3` + `GPTS-pers_4` + `GPTS-pers_5` + 
+                     `GPTS-pers_6` + `GPTS-pers_7` + `GPTS-pers_8` + `GPTS-pers_9` + `GPTS-pers_10`)
+
+# BDI
+df <- df %>%
+  dplyr::mutate(BDI = `BDI1` + `BDI2` + `BDI3` + `BDI5` + `BDI6` + `BDI7` + `BDI8` + `BDI10` 
+         + `BDI11` + `BDI12` + `BDI13` + `BDI14` + `BDI15` + `BDI16` + `BDI17` + `BDI18` + `BDI19` +
+           `BDI20` + `BDI21`)
+
+# SF-36
+df <- df %>%
+  dplyr::mutate(SF36_SociFunc = `SF36-#20` + `SF36-#32`,
+         SF36_RoleEmoProblem = `SF36-#13-15_1` + `SF36-#13-15_2` + `SF36-#13-15_3`)
+
+# PCL
+df <- df %>%
+  dplyr::mutate(PCL = `PCLsf_1` + `PCLsf_2` + `PCLsf_3`)
+
+# DERS
+df <- df %>%
+  dplyr::mutate(DERS_Nonacceptance = `DERS_11` + `DERS_12` + `DERS_21` + `DERS_23` + `DERS_25` + `DERS_29`,
+         DERS_DiffGoalDirectedBehaviour = `DERS_13` + `DERS_18` + (6 - `DERS_20`) + `DERS_26` + `DERS_33`,
+         DERS_Impulse = `DERS_3` + `DERS_14` + `DERS_19` + (6 - `DERS_24`) + `DERS_27` + `DERS_32`,
+         DERS_LackAwareness = (6 - `DERS_2`) + (6 - `DERS_6`) + (6 - `DERS_8`) + (6 - `DERS_10`) + 
+           (6 - `DERS_17`) + (6 - `DERS_34`),
+         DERS_LackStrategies = `DERS_15` + `DERS_16` + (6 - `DERS_22`) + `DERS_28` + `DERS_30` + 
+           `DERS_31` + `DERS_35` + `DERS_36`,
+         DERS_LackClarity = (6 - `DERS_1`) + `DERS_4` + `DERS_5` + (6 - `DERS_7`) + `DERS_9`,
+         DERS = DERS_Nonacceptance + DERS_DiffGoalDirectedBehaviour + DERS_Impulse + DERS_LackAwareness + 
+                DERS_LackStrategies + DERS_LackClarity)
+
+# CFS
+df <- df %>%
+  dplyr::mutate(CFS_Abandonment = `CFS_2`+ `CFS_3` + `CFS_8` +`CFS_9` )
+df <- df %>%
+  dplyr::mutate(CFS_ReCoping = `CFS_1`+ `CFS_5` + `CFS_6` +`CFS_10` )
+df <- df %>%
+  dplyr::mutate(CFS_MetaCoping = `CFS_7`+ `CFS_4` + `CFS_11` +`CFS_12` )
+df <- df %>%
+  mutate(CFS_Overall = `CFS_1`+ `CFS_2` + `CFS_3` +`CFS_4` + `CFS_5` + `CFS_6` +`CFS_7` + `CFS_8` + 
+           `CFS_9` +`CFS_10` + `CFS_11` + `CFS_12` )
+```
+
+```{r Save data}
+write_xlsx(df, "Data/EMA baseline scored_YZ06052.xlsx")
+```
+
