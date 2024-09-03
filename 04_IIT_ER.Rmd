@@ -1,0 +1,216 @@
+---
+title: "04_IIT_ER"
+author: "Sglatt"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Packages}
+if (!require("car")) {install.packages("car"); require("car")} 
+if (!require("descr")) {install.packages("descr"); require("descr")} 
+if (!require("dplyr")) {install.packages("dplyr"); require("dplyr")}
+if (!require("readxl")) {install.packages("readxl"); require("readxl")}
+if (!require("stringr")) {install.packages("stringr"); require("stringr")}
+if (!require("summarytools")) {install.packages("summarytools"); require("summarytools")} 
+if (!require("tidyverse")) {install.packages("tidyverse"); require("tidyverse")}
+if (!require("writexl")) {install.packages("writexl"); require("writexl")}
+```
+
+```{r Data}
+EMA_df <- readxl::read_xlsx("Data/EMA_cleaned_8.22.24.xlsx")
+colnames(EMA_df) <- gsub(" ", "_", colnames(EMA_df)) 
+glimpse(EMA_df)
+```
+
+```{r IIT affect indices}
+EMA_df <- EMA_df %>%
+  mutate(
+    
+    ### "How positive do you feel (on a sliding scale from 0 to 100)?" [_pos_1]
+    
+    # Average for the negative scenarios (N1_pos_1, N2_pos_1, etc.)
+    N_pos_avg = rowMeans(select(., starts_with("N")) %>% select(ends_with("_pos_1")), na.rm = TRUE),
+    
+    # Average for the positive scenarios (P1_pos_1, P2_pos_1, etc.)
+    P_pos_avg = rowMeans(select(., starts_with("P")) %>% select(ends_with("_pos_1")), na.rm = TRUE),
+    
+    # Average for both the positive and negative scenarios 
+    NP_pos_avg = rowMeans(select(., matches("^[NP]\\d+_pos_1$")), na.rm = TRUE),
+    
+    
+    ### "How negative do you feel (on a sliding scale from 0 to 100)?" [_neg_1]
+        
+    # Average for the negative scenarios (N1_neg_1, N2_neg_1, etc.)
+    N_neg_avg = rowMeans(select(., starts_with("N")) %>% select(ends_with("_neg_1")), na.rm = TRUE),
+    
+    # Average for the positive scenarios (P1_neg_1, P2_neg_1, etc.)
+    P_neg_avg = rowMeans(select(., starts_with("P")) %>% select(ends_with("_neg_1")), na.rm = TRUE),
+    
+    # Average for the positive and negative scenarios 
+    NP_neg_avg = rowMeans(select(., matches("^[NP]\\d+_neg_1$")), na.rm = TRUE),
+    
+    
+    ### "After having these thoughts, how positive do you feel now (on a sliding scale from 0 to 100)?" [_ERpos_1]
+    
+    # Average for the negative scenarios (N1_ERpos_1, N2_ERpos_1, etc.)
+    N_ERpos_avg = rowMeans(select(., starts_with("N")) %>% select(ends_with("_ERpos_1")), na.rm = TRUE),
+
+    # Average for the positive scenarios (P1_ERpos_1, P2_ERpos_1, etc.)
+    P_ERpos_avg = rowMeans(select(., starts_with("P")) %>% select(ends_with("_ERpos_1")), na.rm = TRUE),
+
+    # Average for both the positive and negative scenarios 
+    NP_ERpos_avg = rowMeans(select(., matches("^[NP]\\d+_ERpos_1$")), na.rm = TRUE),
+    
+    
+    ### "After having these thoughts, how negative do you feel now (on a sliding scale from 0 to 100)?" [_ERneg_1]
+    
+    # Average for the negative scenarios (N1_ERneg_1, N2_ERneg_1, etc.)
+    N_ERneg_avg = rowMeans(select(., starts_with("N")) %>% select(ends_with("_ERneg_1")), na.rm = TRUE),
+
+    # Average for the positive scenarios (P1_ERneg_1, P2_ERneg_1, etc.)
+    P_ERneg_avg = rowMeans(select(., starts_with("P")) %>% select(ends_with("_ERneg_1")), na.rm = TRUE),
+
+    # Average for both the negative and negative scenarios 
+    NP_ERneg_avg = rowMeans(select(., matches("^[NP]\\d+_ERneg_1$")), na.rm = TRUE),
+    
+    
+    ### change score from pre [_pos_1 / _neg_1] and post [_ERpos_1 / _ERneg_1] IIT *averages*
+    
+    N_pos_change = N_ERpos_avg - N_pos_avg,
+    N_neg_change = N_ERneg_avg - N_neg_avg,
+    
+    P_pos_change = P_ERpos_avg - P_pos_avg,
+    P_neg_change = P_ERneg_avg - P_neg_avg,
+
+    NP_pos_change = NP_ERpos_avg - NP_pos_avg,
+    NP_neg_change = NP_ERneg_avg - NP_neg_avg,
+    
+    
+    ### Seven ER questions after each scenario
+    # ER_1 "I’m savoring this moment and feeling up for anything"
+    # ER_2 "Whatever positive feelings I have right now will end soon. I have to accept that this has happened"
+    # ER_3 "I dwell upon the feelings this situation has evoked in me"
+    # ER_4 "I think about how I can best cope with the situation"
+    # ER_5 "I change the way I was thinking in order to feel less negative emotion or more positive emotion"
+    # ER_6 "think this hasn’t been too bad compared to other things"
+    # ER_7 "I try to do other things to take my mind off it." 
+
+    # Averages for each ER set (above) in negative scenarios
+    N1_ER_avg = rowMeans(select(., starts_with("N1_ER_")), na.rm = TRUE), 
+    N2_ER_avg = rowMeans(select(., starts_with("N2_ER_")), na.rm = TRUE),
+    N3_ER_avg = rowMeans(select(., starts_with("N3_ER_")), na.rm = TRUE),
+    N4_ER_avg = rowMeans(select(., starts_with("N4_ER_")), na.rm = TRUE),
+    N5_ER_avg = rowMeans(select(., starts_with("N5_ER_")), na.rm = TRUE),
+    N6_ER_avg = rowMeans(select(., starts_with("N6_ER_")), na.rm = TRUE),
+    N7_ER_avg = rowMeans(select(., starts_with("N7_ER_")), na.rm = TRUE),
+    N8_ER_avg = rowMeans(select(., starts_with("N8_ER_")), na.rm = TRUE),
+    N9_ER_avg = rowMeans(select(., starts_with("N9_ER_")), na.rm = TRUE),
+    N10_ER_avg = rowMeans(select(., starts_with("N10_ER_")), na.rm = TRUE),
+    N11_ER_avg = rowMeans(select(., starts_with("N11_ER_")), na.rm = TRUE),
+    N12_ER_avg = rowMeans(select(., starts_with("N12_ER_")), na.rm = TRUE),
+    
+    # Average of all ER items (*not averages*) in negative scenarios (N1_ER_1 through N12_ER_7)
+    N_ER_avg_1 = rowMeans(select(., matches("^N\\d+_ER_\\d+$")), na.rm = TRUE),
+    
+    # Averages for each ER set in positive scenarios
+    P1_ER_avg = rowMeans(select(., starts_with("P1_ER_")), na.rm = TRUE),
+    P2_ER_avg = rowMeans(select(., starts_with("P2_ER_")), na.rm = TRUE),
+    P3_ER_avg = rowMeans(select(., starts_with("P3_ER_")), na.rm = TRUE),
+    P4_ER_avg = rowMeans(select(., starts_with("P4_ER_")), na.rm = TRUE),
+    P5_ER_avg = rowMeans(select(., starts_with("P5_ER_")), na.rm = TRUE),
+    P6_ER_avg = rowMeans(select(., starts_with("P6_ER_")), na.rm = TRUE),
+    P7_ER_avg = rowMeans(select(., starts_with("P7_ER_")), na.rm = TRUE),
+    P8_ER_avg = rowMeans(select(., starts_with("P8_ER_")), na.rm = TRUE),
+    P9_ER_avg = rowMeans(select(., starts_with("P9_ER_")), na.rm = TRUE),
+    P10_ER_avg = rowMeans(select(., starts_with("P10_ER_")), na.rm = TRUE),
+    P11_ER_avg = rowMeans(select(., starts_with("P11_ER_")), na.rm = TRUE),
+    P12_ER_avg = rowMeans(select(., starts_with("P12_ER_")), na.rm = TRUE),
+    
+    # Average of all ER items (*not averages*) in positive scenarios (P1_ER_1 through P12_ER_7)
+    P_ER_avg_1 = rowMeans(select(., matches("^P\\d+_ER_\\d+$")), na.rm = TRUE),
+    
+    # Average of all ER items (*not averages) across negative and positive scenarios (N1_ER_1-N12_ER_7 and P1_ER_1-P12_ER_7)
+    NP_ER_avg_1 = rowMeans(select(., matches("^[NP]\\d+_ER_\\d+$")), na.rm = TRUE)
+  )
+# Verify that the above called the right averages (and not something that was created)
+grep("^P\\d+_ER_\\d+$", colnames(EMA_df), value = TRUE)
+grep("^N\\d+_ER_\\d+$", colnames(EMA_df), value = TRUE)
+
+grep("^[NP]\\d+_pos_1$", colnames(EMA_df), value = TRUE)
+grep("^[NP]\\d+_neg_1$", colnames(EMA_df), value = TRUE)
+
+grep("^[NP]\\d+_ERpos_1$", colnames(EMA_df), value = TRUE)
+grep("^[NP]\\d+_ERneg_1$", colnames(EMA_df), value = TRUE)
+
+EMA_df %>%  select(starts_with("N") & ends_with("_pos_1"))
+EMA_df %>%  select(starts_with("P") & ends_with("_pos_1"))
+
+EMA_df %>%  select(starts_with("N") & ends_with("_neg_1"))
+EMA_df %>%  select(starts_with("P") & ends_with("_neg_1"))
+
+EMA_df %>%  select(starts_with("N") & ends_with("ERpos_1"))
+EMA_df %>%  select(starts_with("P") & ends_with("ERpos_1"))
+
+EMA_df %>%  select(starts_with("N") & ends_with("ERneg_1"))
+EMA_df %>%  select(starts_with("P") & ends_with("ERneg_1"))
+
+EMA_df <- EMA_df %>%
+  mutate(
+    # Average of all ER averages in negative scenarios (N1_ER_1:N1_ER_7, N2_ER_1:N2_ER_7, etc.)
+    N_ER_avg_2 = rowMeans(select(., starts_with("N") & ends_with("_ER_avg")), na.rm = TRUE),
+    
+    # Average of all ER averages in positive scenarios (P1_ER_1:P1_ER_7, P2_ER_1:P2_ER_7, etc.)
+    P_ER_avg_2 = rowMeans(select(., starts_with("P") & ends_with("_ER_avg")), na.rm = TRUE),
+    
+    # Average of all ER averages across positive and negative scenarios 
+    NP_ER_avg_2 = rowMeans(select(., ends_with("_ER_avg")), na.rm = TRUE),
+  )
+
+# Verify that these called the right averages (and not something else that was created above) 
+EMA_df %>%  select(starts_with("N") & ends_with("_ER_avg"))
+EMA_df %>%  select(starts_with("P") & ends_with("_ER_avg"))
+EMA_df %>%  select(ends_with("_ER_avg"))
+```
+
+```{r Save data}
+write.csv(EMA_df, paste0("Created_data/EMA_cleaned_SG_", Sys.Date(), ".csv"))
+```
+
+```{r Descriptives}
+# subset the data
+Subset_df <- EMA_df %>%
+  select(all_of(c(
+    
+    # Pos/neg pre-averages 
+    "N_pos_avg", "P_pos_avg", "NP_pos_avg",
+    "N_neg_avg", "P_neg_avg", "NP_neg_avg",
+    "N_ERpos_avg", "P_ERpos_avg", "NP_ERpos_avg",
+    "N_ERneg_avg", "P_ERneg_avg", "NP_ERneg_avg",
+
+    # Change Scores
+    "N_pos_change", "N_neg_change",
+    "P_pos_change", "P_neg_change",
+    "NP_pos_change", "NP_neg_change",
+
+    # ER 7-item set averages
+    "N1_ER_avg", "N2_ER_avg", "N3_ER_avg", "N4_ER_avg", "N5_ER_avg", 
+    "N6_ER_avg", "N7_ER_avg", "N8_ER_avg", "N9_ER_avg", "N10_ER_avg", 
+    "N11_ER_avg", "N12_ER_avg",
+    
+    # ER averages across items
+    "N_ER_avg_1", "P_ER_avg_1", "NP_ER_avg_1",
+
+    # ER Averages of averages
+    "N_ER_avg_2", "P_ER_avg_2", "NP_ER_avg_2"
+  )))
+
+(summary_output_1 <- dfSummary(Subset_df))
+(summary_output_2 <- descr(Subset_df))
+write.csv(summary_output_2, paste0("Created_data/summary_output_SG_", 
+                                   format(Sys.Date(), "%Y-%m-%d"), ".csv"), row.names = TRUE)
+```
+
