@@ -10,9 +10,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r Packages}
+if (!require("apaTables")) {install.packages("apaTables"); require("apaTables")} 
 if (!require("car")) {install.packages("car"); require("car")} 
-if (!require("descr")) {install.packages("descr"); require("descr")} 
+if (!require("descr")) {install.packages("descr"); require("descr")}
+if (!require("devtools")) {install.packages("devtools"); require("devtools")} 
+devtools::install_github("DoctorBJones/datadictionary"); require ("datadictionary")
 if (!require("dplyr")) {install.packages("dplyr"); require("dplyr")}
+if (!require("gridExtra")) {install.packages("gridExtra"); require("gridExtra")}
 if (!require("readxl")) {install.packages("readxl"); require("readxl")}
 if (!require("stringr")) {install.packages("stringr"); require("stringr")}
 if (!require("summarytools")) {install.packages("summarytools"); require("summarytools")} 
@@ -89,7 +93,41 @@ EMA_df <- EMA_df %>%
     NP_pos_change = NP_ERpos_avg - NP_pos_avg,
     NP_neg_change = NP_ERneg_avg - NP_neg_avg,
     
+    # Average of all ER items (*not averages*) in negative scenarios (N1_ER_1 through N12_ER_7)
+    N_ER_avg_1 = rowMeans(select(., matches("^N\\d+_ER_\\d+$")), na.rm = TRUE),
     
+    # Average of all ER items (*not averages*) in positive scenarios (P1_ER_1 through P12_ER_7)
+    P_ER_avg_1 = rowMeans(select(., matches("^P\\d+_ER_\\d+$")), na.rm = TRUE),
+    
+    # Average of all ER items (*not averages) across negative and positive scenarios (N1_ER_1-N12_ER_7 and P1_ER_1-P12_ER_7)
+    NP_ER_avg_1 = rowMeans(select(., matches("^[NP]\\d+_ER_\\d+$")), na.rm = TRUE)
+  )
+# Verify that the above called the right averages (and not something that was created)
+grep("^P\\d+_ER_\\d+$", colnames(EMA_df), value = TRUE)
+grep("^N\\d+_ER_\\d+$", colnames(EMA_df), value = TRUE)
+
+grep("^[NP]\\d+_pos_1$", colnames(EMA_df), value = TRUE)
+grep("^[NP]\\d+_neg_1$", colnames(EMA_df), value = TRUE)
+
+grep("^[NP]\\d+_ER_\\d+$", colnames(EMA_df), value = TRUE)
+
+grep("^[NP]\\d+_ERpos_1$", colnames(EMA_df), value = TRUE)
+grep("^[NP]\\d+_ERneg_1$", colnames(EMA_df), value = TRUE)
+
+EMA_df %>%  select(starts_with("N") & ends_with("_pos_1"))
+EMA_df %>%  select(starts_with("P") & ends_with("_pos_1"))
+
+EMA_df %>%  select(starts_with("N") & ends_with("_neg_1"))
+EMA_df %>%  select(starts_with("P") & ends_with("_neg_1"))
+
+EMA_df %>%  select(starts_with("N") & ends_with("ERpos_1"))
+EMA_df %>%  select(starts_with("P") & ends_with("ERpos_1"))
+
+EMA_df %>%  select(starts_with("N") & ends_with("ERneg_1"))
+EMA_df %>%  select(starts_with("P") & ends_with("ERneg_1"))
+
+EMA_df <- EMA_df %>%
+  mutate(
     ### Seven ER questions after each scenario
     # ER_1 "I’m savoring this moment and feeling up for anything"
     # ER_2 "Whatever positive feelings I have right now will end soon. I have to accept that this has happened"
@@ -113,9 +151,6 @@ EMA_df <- EMA_df %>%
     N11_ER_avg = rowMeans(select(., starts_with("N11_ER_")), na.rm = TRUE),
     N12_ER_avg = rowMeans(select(., starts_with("N12_ER_")), na.rm = TRUE),
     
-    # Average of all ER items (*not averages*) in negative scenarios (N1_ER_1 through N12_ER_7)
-    N_ER_avg_1 = rowMeans(select(., matches("^N\\d+_ER_\\d+$")), na.rm = TRUE),
-    
     # Averages for each ER set in positive scenarios
     P1_ER_avg = rowMeans(select(., starts_with("P1_ER_")), na.rm = TRUE),
     P2_ER_avg = rowMeans(select(., starts_with("P2_ER_")), na.rm = TRUE),
@@ -130,36 +165,6 @@ EMA_df <- EMA_df %>%
     P11_ER_avg = rowMeans(select(., starts_with("P11_ER_")), na.rm = TRUE),
     P12_ER_avg = rowMeans(select(., starts_with("P12_ER_")), na.rm = TRUE),
     
-    # Average of all ER items (*not averages*) in positive scenarios (P1_ER_1 through P12_ER_7)
-    P_ER_avg_1 = rowMeans(select(., matches("^P\\d+_ER_\\d+$")), na.rm = TRUE),
-    
-    # Average of all ER items (*not averages) across negative and positive scenarios (N1_ER_1-N12_ER_7 and P1_ER_1-P12_ER_7)
-    NP_ER_avg_1 = rowMeans(select(., matches("^[NP]\\d+_ER_\\d+$")), na.rm = TRUE)
-  )
-# Verify that the above called the right averages (and not something that was created)
-grep("^P\\d+_ER_\\d+$", colnames(EMA_df), value = TRUE)
-grep("^N\\d+_ER_\\d+$", colnames(EMA_df), value = TRUE)
-
-grep("^[NP]\\d+_pos_1$", colnames(EMA_df), value = TRUE)
-grep("^[NP]\\d+_neg_1$", colnames(EMA_df), value = TRUE)
-
-grep("^[NP]\\d+_ERpos_1$", colnames(EMA_df), value = TRUE)
-grep("^[NP]\\d+_ERneg_1$", colnames(EMA_df), value = TRUE)
-
-EMA_df %>%  select(starts_with("N") & ends_with("_pos_1"))
-EMA_df %>%  select(starts_with("P") & ends_with("_pos_1"))
-
-EMA_df %>%  select(starts_with("N") & ends_with("_neg_1"))
-EMA_df %>%  select(starts_with("P") & ends_with("_neg_1"))
-
-EMA_df %>%  select(starts_with("N") & ends_with("ERpos_1"))
-EMA_df %>%  select(starts_with("P") & ends_with("ERpos_1"))
-
-EMA_df %>%  select(starts_with("N") & ends_with("ERneg_1"))
-EMA_df %>%  select(starts_with("P") & ends_with("ERneg_1"))
-
-EMA_df <- EMA_df %>%
-  mutate(
     # Average of all ER averages in negative scenarios (N1_ER_1:N1_ER_7, N2_ER_1:N2_ER_7, etc.)
     N_ER_avg_2 = rowMeans(select(., starts_with("N") & ends_with("_ER_avg")), na.rm = TRUE),
     
@@ -168,6 +173,8 @@ EMA_df <- EMA_df %>%
     
     # Average of all ER averages across positive and negative scenarios 
     NP_ER_avg_2 = rowMeans(select(., ends_with("_ER_avg")), na.rm = TRUE),
+    
+    ## _avg_2 are checks! I think they should be the same as avg_1 if done correctly
   )
 
 # Verify that these called the right averages (and not something else that was created above) 
@@ -176,18 +183,32 @@ EMA_df %>%  select(starts_with("P") & ends_with("_ER_avg"))
 EMA_df %>%  select(ends_with("_ER_avg"))
 ```
 
-```{r Save data}
+```{r Save data, eval=FALSE}
 write.csv(EMA_df, paste0("Created_data/EMA_cleaned_SG_", Sys.Date(), ".csv"))
 ```
 
+```{r Data dictionary}
+filtered_df <- EMA_df[EMA_df$Day == 1, ]
+dictionary <- create_dictionary(filtered_df)
+write.csv(dictionary, paste0("Created_data/Data_dictionary_SG_", Sys.Date(), ".csv"))
+```
+
 ```{r Descriptives}
+# If the data isn't loaded from above, uncomment and run:
+# EMA_df <- read.csv("Created_data/EMA_cleaned_SG_2024-09-03.csv")
+
+# Filter to day = 1
+filtered_df <- EMA_df[EMA_df$Day == 1, ]
+
 # subset the data
-Subset_df <- EMA_df %>%
+Subset_df <- filtered_df %>%
   select(all_of(c(
     
     # Pos/neg pre-averages 
     "N_pos_avg", "P_pos_avg", "NP_pos_avg",
     "N_neg_avg", "P_neg_avg", "NP_neg_avg",
+    
+    # Pos/neg post-averages
     "N_ERpos_avg", "P_ERpos_avg", "NP_ERpos_avg",
     "N_ERneg_avg", "P_ERneg_avg", "NP_ERneg_avg",
 
@@ -195,22 +216,65 @@ Subset_df <- EMA_df %>%
     "N_pos_change", "N_neg_change",
     "P_pos_change", "P_neg_change",
     "NP_pos_change", "NP_neg_change",
-
-    # ER 7-item set averages
-    "N1_ER_avg", "N2_ER_avg", "N3_ER_avg", "N4_ER_avg", "N5_ER_avg", 
-    "N6_ER_avg", "N7_ER_avg", "N8_ER_avg", "N9_ER_avg", "N10_ER_avg", 
-    "N11_ER_avg", "N12_ER_avg",
     
     # ER averages across items
     "N_ER_avg_1", "P_ER_avg_1", "NP_ER_avg_1",
-
-    # ER Averages of averages
-    "N_ER_avg_2", "P_ER_avg_2", "NP_ER_avg_2"
+    
+    # indices relating to affect, symptoms, flexibility and ER measures
+    "SSI", 
+    "BDI",
+    "EDS",
+    "STAIS", "STAIT",
+    "PCL",
+    "GPTS_self", "GPTS_pers", "GPTS",  
+    "SF36_RoleEmoProblem", "SF36_SociFunc",
+    "DERS_Nonacceptance", "DERS_DiffGoalDirectedBehaviour", "DERS_Impulse", 
+    "DERS_LackAwareness", "DERS_LackClarity", "DERS_LackStrategies",
+    "CFS_Abandonment", "CFS_ReCoping", "CFS_MetaCoping", "CFS_Overall",
+    "CDRISC"
   )))
 
 (summary_output_1 <- dfSummary(Subset_df))
 (summary_output_2 <- descr(Subset_df))
-write.csv(summary_output_2, paste0("Created_data/summary_output_SG_", 
+write.csv(summary_output_2, paste0("Created_data/Summary_output_SG_", 
                                    format(Sys.Date(), "%Y-%m-%d"), ".csv"), row.names = TRUE)
+# Descriptives vis
+## Histograms
+plot_list <- list()
+for (var in names(Subset_df)) {
+  p <- ggplot(Subset_df, aes_string(x = var)) +
+    geom_histogram(binwidth = 1, fill = 'blue', color = 'black', alpha = 0.7) +
+    theme_minimal() +
+    ggtitle(paste(var))
+  plot_list[[var]] <- p
+}
+
+## Density
+plot_list_2 <- list()
+for (var in names(Subset_df)) {
+  p <- ggplot(Subset_df, aes_string(x = var)) +
+    geom_density(fill = 'blue', color = 'black', alpha = 0.7) +
+    theme_minimal() +
+    ggtitle(paste(var))
+  plot_list_2[[var]] <- p
+}
+
+# Save histograms
+png(paste0("Created_data/Var_hist_SG_", format(Sys.Date(), "%Y-%m-%d"), ".png"), width = 1100, height = 800)
+grid.arrange(grobs = plot_list, ncol = 6)  
+dev.off()
+
+# Save densities
+png(paste0("Created_data/Var_dens_SG_", format(Sys.Date(), "%Y-%m-%d"), ".png"), width = 1100, height = 800)
+grid.arrange(grobs = plot_list_2, ncol = 6)  
+dev.off()
+
+# Correlations table
+(Corr_table <- apa.cor.table(Subset_df, filename = paste0("Created_data/Correlations_SG_", 
+                                                          format(Sys.Date(), "%Y-%m-%d"), ".doc"),
+                             table.number = 1, 
+                             show.conf.interval = TRUE, 
+                             show.sig.stars = TRUE, 
+                             landscape = TRUE))
 ```
 
