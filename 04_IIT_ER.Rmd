@@ -13,9 +13,12 @@ knitr::opts_chunk$set(echo = TRUE)
 if (!require("apaTables")) {install.packages("apaTables"); require("apaTables")} 
 if (!require("car")) {install.packages("car"); require("car")} 
 if (!require("descr")) {install.packages("descr"); require("descr")}
+if (!require("CCA")) {install.packages("CCA"); require("CCA")}
+if (!require("CCP")) {install.packages("CCP"); require("CCP")}
 if (!require("devtools")) {install.packages("devtools"); require("devtools")} 
 devtools::install_github("DoctorBJones/datadictionary"); require ("datadictionary")
 if (!require("dplyr")) {install.packages("dplyr"); require("dplyr")}
+if (!require("GGally")) {install.packages("GGally"); require("GGally")}
 if (!require("gridExtra")) {install.packages("gridExtra"); require("gridExtra")}
 if (!require("readxl")) {install.packages("readxl"); require("readxl")}
 if (!require("stringr")) {install.packages("stringr"); require("stringr")}
@@ -195,7 +198,7 @@ write.csv(dictionary, paste0("Created_data/Data_dictionary_SG_", Sys.Date(), ".c
 
 ```{r Descriptives}
 # If the data isn't loaded from above, uncomment and run:
-# EMA_df <- read.csv("Created_data/EMA_cleaned_SG_2024-09-03.csv")
+EMA_df <- read.csv("Created_data/EMA_cleaned_SG_2024-09-03.csv")
 
 # Filter to day = 1
 filtered_df <- EMA_df[EMA_df$Day == 1, ]
@@ -211,6 +214,10 @@ Subset_df <- filtered_df %>%
     # Pos/neg post-averages
     "N_ERpos_avg", "P_ERpos_avg", "NP_ERpos_avg",
     "N_ERneg_avg", "P_ERneg_avg", "NP_ERneg_avg",
+    
+    # ER averages
+    # "N_ER_avg_2", "P_ER_avg_2", "NP_ER_avg_2",
+    "N_ER_avg_1", "P_ER_avg_1", "NP_ER_avg_1",
 
     # Change Scores
     "N_pos_change", "N_neg_change",
@@ -231,7 +238,10 @@ Subset_df <- filtered_df %>%
     "DERS_Nonacceptance", "DERS_DiffGoalDirectedBehaviour", "DERS_Impulse", 
     "DERS_LackAwareness", "DERS_LackClarity", "DERS_LackStrategies",
     "CFS_Abandonment", "CFS_ReCoping", "CFS_MetaCoping", "CFS_Overall",
-    "CDRISC"
+    "CDRISC", 
+    
+    # flexibility
+    "P_IFI", "N_IFI"
   )))
 
 (summary_output_1 <- dfSummary(Subset_df))
@@ -276,5 +286,63 @@ dev.off()
                              show.conf.interval = TRUE, 
                              show.sig.stars = TRUE, 
                              landscape = TRUE))
+```
+
+# 2024-09-13 idea
+```{r}
+# maybe we can do canonical correlations/loadings
+# abs value of .5
+# ER strategy use as canonical loadings - set 1 = list of ER strategies. for set 2 - symptoms; or two IFIs (P and N like wisteria did); or negative and positive affect changes...so among ER strategies, what are the ones that relate the most to flexibility, or some of the symptoms, or 
+
+# So: 1) categorize (e.g., just look at flexibility); 2) we can look at canonical correlations; 3) simplify! forget about P and N. Just focus on average for each trial (the NP variables I made for everyone); 4) later, if we start to see effects, is it driven by positive/negative? /// if don't see effects, maybe it only applies to positive/negative?
+```
+
+```{r canonical correlations}
+# Define sets
+Set_1_ER <- EMA_df[, c("N1_ER_1", "N1_ER_2", "N1_ER_3", "N1_ER_4", "N1_ER_5", "N1_ER_6", "N1_ER_7")]
+Set_2_outcomes <- EMA_df[, c("P_IFI", "N_IFI")]
+
+# Set descriptives
+ggpairs(Set_1_ER)
+ggpairs(Set_2_outcomes)
+
+# standard correlations
+corr <- matcor(Set_1_ER, Set_2_outcomes)
+img.matcor(corr, type = 2)
+
+# Canonical correlations
+canon <- cc(Set_1_ER, Set_2_outcomes)
+# canon$cor
+canon      # all results
+canon[3:4] # raw canonical coefficients
+plt.cc(canon, var.label = TRUE, ind.names = EMA_df[,1])  # Visualize
+
+# tests of canonical dimensions
+rho <- canon$cor
+n <- dim(Set_1_ER)[1]
+p <- length(Set_1_ER)
+q <- length(Set_2_outcomes)
+p.asym(rho, n, p, q, tstat = "Wilks") # F-approximations for p val
+p.asym(rho, n, p, q, tstat = "Hotelling")
+p.asym(rho, n, p, q, tstat = "Pillai")
+
+
+# Canonical loadings
+canon_loads <- comput(Set_1_ER, Set_2_outcomes, canon)
+canon_loads[3:6] # canonical loadings
+
+
+# standardized canonical coefficients diagonal matrix of ER
+s1 <- diag(sqrt(diag(cov(Set_1_ER))))
+s1 %*% canon$xcoef
+
+# standardized canonical coefficients diagonal matrix of IFI
+s2 <- diag(sqrt(diag(cov(Set_2_outcomes))))
+s2 %*% canon$ycoef
+
+```
+
+```{r}
+
 ```
 
