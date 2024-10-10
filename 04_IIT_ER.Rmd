@@ -2,7 +2,9 @@
 title: "04_IIT_ER"
 author: "Sglatt"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  word_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -10,13 +12,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r Packages}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
 if (!require("apaTables")) {install.packages("apaTables"); require("apaTables")} 
 if (!require("car")) {install.packages("car"); require("car")} 
 if (!require("descr")) {install.packages("descr"); require("descr")}
 if (!require("CCA")) {install.packages("CCA"); require("CCA")}
 if (!require("CCP")) {install.packages("CCP"); require("CCP")}
 if (!require("devtools")) {install.packages("devtools"); require("devtools")} 
-devtools::install_github("DoctorBJones/datadictionary"); require ("datadictionary")
+# devtools::install_github("DoctorBJones/datadictionary"); require ("datadictionary")
 if (!require("dplyr")) {install.packages("dplyr"); require("dplyr")}
 if (!require("GGally")) {install.packages("GGally"); require("GGally")}
 if (!require("gridExtra")) {install.packages("gridExtra"); require("gridExtra")}
@@ -30,7 +34,7 @@ if (!require("writexl")) {install.packages("writexl"); require("writexl")}
 ```{r Data}
 EMA_df <- readxl::read_xlsx("Data/EMA_cleaned_8.22.24.xlsx")
 colnames(EMA_df) <- gsub(" ", "_", colnames(EMA_df)) 
-glimpse(EMA_df)
+# glimpse(EMA_df)
 ```
 
 ```{r IIT affect indices}
@@ -50,7 +54,7 @@ EMA_df <- EMA_df %>%
     
     
     ### "How negative do you feel (on a sliding scale from 0 to 100)?" [_neg_1]
-        
+    
     # Average for the negative scenarios (N1_neg_1, N2_neg_1, etc.)
     N_neg_avg = rowMeans(select(., starts_with("N")) %>% select(ends_with("_neg_1")), na.rm = TRUE),
     
@@ -65,10 +69,10 @@ EMA_df <- EMA_df %>%
     
     # Average for the negative scenarios (N1_ERpos_1, N2_ERpos_1, etc.)
     N_ERpos_avg = rowMeans(select(., starts_with("N")) %>% select(ends_with("_ERpos_1")), na.rm = TRUE),
-
+    
     # Average for the positive scenarios (P1_ERpos_1, P2_ERpos_1, etc.)
     P_ERpos_avg = rowMeans(select(., starts_with("P")) %>% select(ends_with("_ERpos_1")), na.rm = TRUE),
-
+    
     # Average for both the positive and negative scenarios 
     NP_ERpos_avg = rowMeans(select(., matches("^[NP]\\d+_ERpos_1$")), na.rm = TRUE),
     
@@ -77,10 +81,10 @@ EMA_df <- EMA_df %>%
     
     # Average for the negative scenarios (N1_ERneg_1, N2_ERneg_1, etc.)
     N_ERneg_avg = rowMeans(select(., starts_with("N")) %>% select(ends_with("_ERneg_1")), na.rm = TRUE),
-
+    
     # Average for the positive scenarios (P1_ERneg_1, P2_ERneg_1, etc.)
     P_ERneg_avg = rowMeans(select(., starts_with("P")) %>% select(ends_with("_ERneg_1")), na.rm = TRUE),
-
+    
     # Average for both the negative and negative scenarios 
     NP_ERneg_avg = rowMeans(select(., matches("^[NP]\\d+_ERneg_1$")), na.rm = TRUE),
     
@@ -92,7 +96,7 @@ EMA_df <- EMA_df %>%
     
     P_pos_change = P_ERpos_avg - P_pos_avg,
     P_neg_change = P_ERneg_avg - P_neg_avg,
-
+    
     NP_pos_change = NP_ERpos_avg - NP_pos_avg,
     NP_neg_change = NP_ERneg_avg - NP_neg_avg,
     
@@ -139,7 +143,7 @@ EMA_df <- EMA_df %>%
     # ER_5 "I change the way I was thinking in order to feel less negative emotion or more positive emotion"
     # ER_6 "think this hasn’t been too bad compared to other things"
     # ER_7 "I try to do other things to take my mind off it." 
-
+    
     # Averages for each ER set (above) in negative scenarios
     N1_ER_avg = rowMeans(select(., starts_with("N1_ER_")), na.rm = TRUE), 
     N2_ER_avg = rowMeans(select(., starts_with("N2_ER_")), na.rm = TRUE),
@@ -184,6 +188,41 @@ EMA_df <- EMA_df %>%
 EMA_df %>%  select(starts_with("N") & ends_with("_ER_avg"))
 EMA_df %>%  select(starts_with("P") & ends_with("_ER_avg"))
 EMA_df %>%  select(ends_with("_ER_avg"))
+
+# 9/13 meeting update; average of each strategy use across scenarios
+EMA_df <- EMA_df %>%
+  mutate(
+    # Average of emotion strategies in negative scenarios
+    N_ER_avg_1 = rowMeans(select(., matches("^N\\d+_ER_1$")), na.rm = TRUE),
+    N_ER_avg_2 = rowMeans(select(., matches("^N\\d+_ER_2$")), na.rm = TRUE),
+    N_ER_avg_3 = rowMeans(select(., matches("^N\\d+_ER_3$")), na.rm = TRUE),
+    N_ER_avg_4 = rowMeans(select(., matches("^N\\d+_ER_4$")), na.rm = TRUE),
+    N_ER_avg_5 = rowMeans(select(., matches("^N\\d+_ER_5$")), na.rm = TRUE),
+    N_ER_avg_6 = rowMeans(select(., matches("^N\\d+_ER_6$")), na.rm = TRUE),
+    N_ER_avg_7 = rowMeans(select(., matches("^N\\d+_ER_7$")), na.rm = TRUE),
+    
+    # Average of emotion strategies in positive scenarios
+    P_ER_avg_1 = rowMeans(select(., matches("^P\\d+_ER_1$")), na.rm = TRUE),
+    P_ER_avg_2 = rowMeans(select(., matches("^P\\d+_ER_2$")), na.rm = TRUE),
+    P_ER_avg_3 = rowMeans(select(., matches("^P\\d+_ER_3$")), na.rm = TRUE),
+    P_ER_avg_4 = rowMeans(select(., matches("^P\\d+_ER_4$")), na.rm = TRUE),
+    P_ER_avg_5 = rowMeans(select(., matches("^P\\d+_ER_5$")), na.rm = TRUE),
+    P_ER_avg_6 = rowMeans(select(., matches("^P\\d+_ER_6$")), na.rm = TRUE),
+    P_ER_avg_7 = rowMeans(select(., matches("^P\\d+_ER_7$")), na.rm = TRUE),
+    
+    # Average of emotion strategies across positive/negative scenarios
+    NP_ER_avg_1 = rowMeans(select(., matches("^[NP]\\d+_ER_1$")), na.rm = TRUE),
+    NP_ER_avg_2 = rowMeans(select(., matches("^[NP]\\d+_ER_2$")), na.rm = TRUE),
+    NP_ER_avg_3 = rowMeans(select(., matches("^[NP]\\d+_ER_3$")), na.rm = TRUE),
+    NP_ER_avg_4 = rowMeans(select(., matches("^[NP]\\d+_ER_4$")), na.rm = TRUE),
+    NP_ER_avg_5 = rowMeans(select(., matches("^[NP]\\d+_ER_5$")), na.rm = TRUE),
+    NP_ER_avg_6 = rowMeans(select(., matches("^[NP]\\d+_ER_6$")), na.rm = TRUE),
+    NP_ER_avg_7 = rowMeans(select(., matches("^[NP]\\d+_ER_7$")), na.rm = TRUE)
+  )
+
+EMA_df %>%  select(matches("^P\\d+_ER_1$"))
+EMA_df %>%  select(matches("^N\\d+_ER_1$"))
+EMA_df %>%  select(matches("^[NP]\\d+_ER_1$"))
 ```
 
 ```{r Save data, eval=FALSE}
@@ -198,7 +237,7 @@ write.csv(dictionary, paste0("Created_data/Data_dictionary_SG_", Sys.Date(), ".c
 
 ```{r Descriptives}
 # If the data isn't loaded from above, uncomment and run:
-EMA_df <- read.csv("Created_data/EMA_cleaned_SG_2024-09-03.csv")
+EMA_df <- read.csv("Created_data/EMA_cleaned_SG_2024-10-10.csv")
 
 # Filter to day = 1
 filtered_df <- EMA_df[EMA_df$Day == 1, ]
@@ -218,7 +257,7 @@ Subset_df <- filtered_df %>%
     # ER averages
     # "N_ER_avg_2", "P_ER_avg_2", "NP_ER_avg_2",
     "N_ER_avg_1", "P_ER_avg_1", "NP_ER_avg_1",
-
+    
     # Change Scores
     "N_pos_change", "N_neg_change",
     "P_pos_change", "P_neg_change",
@@ -288,61 +327,195 @@ dev.off()
                              landscape = TRUE))
 ```
 
-# 2024-09-13 idea
-```{r}
-# maybe we can do canonical correlations/loadings
-# abs value of .5
-# ER strategy use as canonical loadings - set 1 = list of ER strategies. for set 2 - symptoms; or two IFIs (P and N like wisteria did); or negative and positive affect changes...so among ER strategies, what are the ones that relate the most to flexibility, or some of the symptoms, or 
+# 2024-09-13 
+```{r mt summary}
+# ER strategy use as canonical loadings; set 1 = list of ER strategies & set 2 - symptoms; or two IFIs (P and N); or negative and positive affect changes (so the question becomes "among ER strategies, what are the ones that relate the most to flexibility, or some of the symptoms?")
 
-# So: 1) categorize (e.g., just look at flexibility); 2) we can look at canonical correlations; 3) simplify! forget about P and N. Just focus on average for each trial (the NP variables I made for everyone); 4) later, if we start to see effects, is it driven by positive/negative? /// if don't see effects, maybe it only applies to positive/negative?
+# Categorize (e.g., just look at flexibility); 2) look at canonical correlations; 3) simplify! forget about P and N. Just focus on average for each trial (the NP variables I made for everyone); 4) later,if we start to see effects, is it driven by positive/negative? /// if we don't see effects, maybe it only applies to positive/negative?
+```
+
+```{r NP corrs}
+EMA_df <- read.csv("Created_data/EMA_cleaned_SG_2024-10-10.csv")
+filtered_df <- EMA_df[EMA_df$Day == 1, ]
+
+# subset the data
+Subset_df <- filtered_df %>%
+  select(all_of(c(
+    
+    # Pos/neg pre-averages 
+    "NP_pos_avg", "NP_neg_avg",
+    
+    # Pos/neg post-averages
+    "NP_ERpos_avg", "NP_ERneg_avg",
+    
+    # ER averages
+    "NP_ER_avg_2",
+
+    # Change Scores
+    "NP_pos_change", "NP_neg_change",
+    
+    # ER averages across items
+    "NP_ER_avg_1",
+        
+    # flexibility
+    "P_IFI", "N_IFI",
+    
+    # indices relating to affect, symptoms, flexibility and ER measures
+    "SSI", 
+    "BDI",
+    "EDS",
+    "STAIS", "STAIT",
+    "PCL",
+    "GPTS_self", "GPTS_pers", "GPTS",  
+    "SF36_RoleEmoProblem", "SF36_SociFunc",
+    "DERS_Nonacceptance", "DERS_DiffGoalDirectedBehaviour", "DERS_Impulse", 
+    "DERS_LackAwareness", "DERS_LackClarity", "DERS_LackStrategies",
+    "CFS_Abandonment", "CFS_ReCoping", "CFS_MetaCoping", "CFS_Overall",
+    "CDRISC"
+  )))
+
+(Corr_table <- apa.cor.table(Subset_df, filename = paste0("Created_data/Correlations_SG_", 
+                                                          format(Sys.Date(), "%Y-%m-%d"), ".doc"),
+                             table.number = 1, 
+                             show.conf.interval = TRUE, 
+                             show.sig.stars = TRUE, 
+                             landscape = TRUE))
+str(Corr_table)
+# Corr_table$table.body
+Corr_table_df <- as.data.frame(Corr_table$table.body)
+write.csv(Corr_table_df, paste0("Created_data/Correlations_SG_", Sys.Date(), ".csv")) 
 ```
 
 ```{r canonical correlations}
-# Define sets
-Set_1_ER <- EMA_df[, c("N1_ER_1", "N1_ER_2", "N1_ER_3", "N1_ER_4", "N1_ER_5", "N1_ER_6", "N1_ER_7")]
-Set_2_outcomes <- EMA_df[, c("P_IFI", "N_IFI")]
+#### ER strategies across strategies ####
 
-# Set descriptives
-ggpairs(Set_1_ER)
+Set_1_NP_ER <- na.omit(EMA_df[, c("NP_ER_avg_1", "NP_ER_avg_2", "NP_ER_avg_3", "NP_ER_avg_4",
+                                      "NP_ER_avg_5", "NP_ER_avg_6", "NP_ER_avg_7")])
+
+Set_2_outcomes <- na.omit(EMA_df[, c("P_IFI", "N_IFI")])
+
+# descriptives
+ggpairs(Set_1_NP_ER)
 ggpairs(Set_2_outcomes)
 
 # standard correlations
-corr <- matcor(Set_1_ER, Set_2_outcomes)
+corr <- matcor(Set_1_NP_ER, Set_2_outcomes)
 img.matcor(corr, type = 2)
 
 # Canonical correlations
-canon <- cc(Set_1_ER, Set_2_outcomes)
-# canon$cor
-canon      # all results
-canon[3:4] # raw canonical coefficients
+canon <- cc(Set_1_NP_ER, Set_2_outcomes)
+# canon    # all results
+canon$cor
+canon[3:4] # raw canonical coefficients. These are interpreted similarly to regression coefficients
 plt.cc(canon, var.label = TRUE, ind.names = EMA_df[,1])  # Visualize
 
-# tests of canonical dimensions
+# tests of canonical dimensions (need 3 for this to make sense?)
 rho <- canon$cor
-n <- dim(Set_1_ER)[1]
-p <- length(Set_1_ER)
+n <- dim(Set_1_NP_ER)[1]
+p <- length(Set_1_NP_ER)
 q <- length(Set_2_outcomes)
 p.asym(rho, n, p, q, tstat = "Wilks") # F-approximations for p val
 p.asym(rho, n, p, q, tstat = "Hotelling")
 p.asym(rho, n, p, q, tstat = "Pillai")
 
+# loadings
+canon_loads <- comput(Set_1_NP_ER, Set_2_outcomes, canon)
+canon_loads[3:6] # canonical loadings. These are the correlations between the variables and canonical variates
 
-# Canonical loadings
-canon_loads <- comput(Set_1_ER, Set_2_outcomes, canon)
-canon_loads[3:6] # canonical loadings
-
-
-# standardized canonical coefficients diagonal matrix of ER
-s1 <- diag(sqrt(diag(cov(Set_1_ER))))
+# standardized canonical coefficients diagonal matrix of ER; interpret as standardized regression coefficients
+s1 <- diag(sqrt(diag(cov(Set_1_NP_ER))))
 s1 %*% canon$xcoef
 
 # standardized canonical coefficients diagonal matrix of IFI
 s2 <- diag(sqrt(diag(cov(Set_2_outcomes))))
 s2 %*% canon$ycoef
 
+#### ER in negative ####
+
+# sets for canonical - ER strategy use in NEGATIVE scenarios
+Set_1_N_ER <- na.omit(EMA_df[, c("N_ER_avg_1", "N_ER_avg_2", "N_ER_avg_3", "N_ER_avg_4",
+                                     "N_ER_avg_5", "N_ER_avg_6", "N_ER_avg_7")])
+
+# descriptives
+ggpairs(Set_1_N_ER)
+ggpairs(Set_2_outcomes)
+
+# standard correlations
+corr <- matcor(Set_1_N_ER, Set_2_outcomes)
+img.matcor(corr, type = 2)
+
+# Canonical correlations
+canon <- cc(Set_1_N_ER, Set_2_outcomes)
+# canon    # all results
+canon$cor
+canon[3:4] # raw canonical coefficients. These are interpreted similarly to regression coefficients
+plt.cc(canon, var.label = TRUE, ind.names = EMA_df[,1])  # Visualize
+
+# tests of canonical dimensions (need 3 for this to make sense?)
+rho <- canon$cor
+n <- dim(Set_1_N_ER)[1]
+p <- length(Set_1_N_ER)
+q <- length(Set_2_outcomes)
+p.asym(rho, n, p, q, tstat = "Wilks") # F-approximations for p val
+p.asym(rho, n, p, q, tstat = "Hotelling")
+p.asym(rho, n, p, q, tstat = "Pillai")
+
+# loadings
+canon_loads <- comput(Set_1_N_ER, Set_2_outcomes, canon)
+canon_loads[3:6] # canonical loadings. These are the correlations between the variables and canonical variates
+
+# standardized canonical coefficients diagonal matrix of ER; interpret as standardized regression coefficients
+s1 <- diag(sqrt(diag(cov(Set_1_N_ER))))
+s1 %*% canon$xcoef
+
+# standardized canonical coefficients diagonal matrix of IFI
+s2 <- diag(sqrt(diag(cov(Set_2_outcomes))))
+s2 %*% canon$ycoef
+
+#### ER in positive ####
+
+# sets for canonical - ER strategy use in positive scenarios
+Set_1_P_ER <- na.omit(EMA_df[, c("P_ER_avg_1", "P_ER_avg_2", "P_ER_avg_3", "P_ER_avg_4",
+                                     "P_ER_avg_5", "P_ER_avg_6", "P_ER_avg_7")])
+# descriptives
+ggpairs(Set_1_P_ER)
+ggpairs(Set_2_outcomes)
+
+# standard correlations
+corr <- matcor(Set_1_P_ER, Set_2_outcomes)
+img.matcor(corr, type = 2)
+
+# Canonical correlations
+canon <- cc(Set_1_P_ER, Set_2_outcomes)
+# canon    # all results
+canon$cor
+canon[3:4] # raw canonical coefficients. These are interpreted similarly to regression coefficients
+plt.cc(canon, var.label = TRUE, ind.names = EMA_df[,1])  # Visualize
+
+# tests of canonical dimensions (need 3 for this to make sense?)
+rho <- canon$cor
+n <- dim(Set_1_P_ER)[1]
+p <- length(Set_1_P_ER)
+q <- length(Set_2_outcomes)
+p.asym(rho, n, p, q, tstat = "Wilks") # F-approximations for p val
+p.asym(rho, n, p, q, tstat = "Hotelling")
+p.asym(rho, n, p, q, tstat = "Pillai")
+
+# loadings
+canon_loads <- comput(Set_1_P_ER, Set_2_outcomes, canon)
+canon_loads[3:6] # canonical loadings. These are the correlations between the variables and canonical variates
+
+# standardized canonical coefficients diagonal matrix of ER; interpret as standardized regression coefficients
+s1 <- diag(sqrt(diag(cov(Set_1_P_ER))))
+s1 %*% canon$xcoef
+
+# standardized canonical coefficients diagonal matrix of IFI
+s2 <- diag(sqrt(diag(cov(Set_2_outcomes))))
+s2 %*% canon$ycoef
 ```
 
-```{r}
-
+# verify CZs work
+```{r CZ data}
+EMA_df_CZ <- read_xlsx("Created_data/Data_Output_CZ_2024_09_19.xlsx")
 ```
 
